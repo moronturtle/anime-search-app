@@ -5,7 +5,7 @@ import { type ThemeProviderProps } from "@mui/material";
 type ThemeContextType = {
   mode: Mode;
   currentTheme: ThemeProviderProps["theme"];
-  toogleTheme: () => void;
+  toggleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -19,7 +19,7 @@ export const ThemeContextProvider = ({
     (localStorage.getItem("theme") as Mode) || "light"
   );
 
-  const toogleTheme = () => {
+  const toggleTheme = () => {
     setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
   };
 
@@ -32,7 +32,7 @@ export const ThemeContextProvider = ({
   }, [mode]);
 
   return (
-    <ThemeContext.Provider value={{ mode, toogleTheme, currentTheme }}>
+    <ThemeContext.Provider value={{ mode, toggleTheme, currentTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -40,7 +40,8 @@ export const ThemeContextProvider = ({
 
 export const useThemeContext = () => {
   const context = useContext(ThemeContext);
-  if (!context)
+  if (!context) {
     throw new Error("useThemeContext must be used inside ThemeContextProvider");
+  }
   return context;
 };
