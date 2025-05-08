@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { Box, CircularProgress } from "@mui/material";
 
 const SearchPage = React.lazy(() => import("../pages/SearchPage"));
+const DetailPage = React.lazy(() => import("../pages/DetailPage"));
 const MainLayout = React.lazy(() => import("../layout/MainLayout"));
 
 const Fallback = () => {
@@ -38,6 +39,16 @@ const AppRouter = () => {
           <Suspense fallback={<Fallback />}>
             <MainLayout>
               <SearchPage />
+            </MainLayout>
+          </Suspense>
+        }
+      />
+       <Route
+        path="/anime/:id"
+        element={
+          <Suspense fallback={<Fallback />}>
+            <MainLayout>
+              <DetailPage />
             </MainLayout>
           </Suspense>
         }
