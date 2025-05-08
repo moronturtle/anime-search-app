@@ -26,9 +26,9 @@ export const useApi = () => {
       const msg = err?.response?.data?.message || 'Something went wrong.';
 
       if (status === 401) showToast('Unauthorized access.', 'warning');
-      else if (status === 403) showToast('Access forbidden.', 'error');
-      else if (status === 404) showToast('Data not found.', 'error');
-      else showToast(msg, 'error');
+      else if (status === 403) showToast('You do not have permission to access this resource.', 'error');
+      else if (status === 404) showToast('Requested URL resource not found.', 'error');
+      else showToast(msg || 'An error occurred. Please try again later.', 'error');
 
       return Promise.reject(err);
     }

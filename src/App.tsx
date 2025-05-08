@@ -1,6 +1,7 @@
 import AppRouter from "./router/AppRouter";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useThemeContext } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
 import "@fontsource/poppins/400.css";
 import "@fontsource/poppins/700.css";
 
@@ -9,8 +10,10 @@ const App = () => {
 
   return (
     <ThemeProvider theme={currentTheme}>
-      <CssBaseline />
-      <AppRouter />
+      <ToastProvider>
+        <CssBaseline />
+        <AppRouter />
+      </ToastProvider>
     </ThemeProvider>
   );
 };

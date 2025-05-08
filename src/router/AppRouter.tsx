@@ -1,6 +1,33 @@
+import React, { Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
-import MainLayout from "../layout/MainLayout";
-import SearchPage from "../pages/SearchPage";
+import { Box, CircularProgress } from "@mui/material";
+
+const SearchPage = React.lazy(() => import("../pages/SearchPage"));
+const MainLayout = React.lazy(() => import("../layout/MainLayout"));
+
+const Fallback = () => {
+  return (
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      height="100vh"
+    >
+      <CircularProgress />
+    </Box>
+  );
+};
+
+const NotFound = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    height="100vh"
+  >
+    <h1>Page Not Found</h1>
+  </Box>
+);
 
 const AppRouter = () => {
   return (
@@ -8,11 +35,14 @@ const AppRouter = () => {
       <Route
         path="/"
         element={
-          <MainLayout>
-            <SearchPage />
-          </MainLayout>
+          <Suspense fallback={<Fallback />}>
+            <MainLayout>
+              <SearchPage />
+            </MainLayout>
+          </Suspense>
         }
       />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
