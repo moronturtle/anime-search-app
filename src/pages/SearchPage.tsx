@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useGetAnime } from "../api/AnimeApi";
 import { useDebounce } from "../hooks/useDebounce";
 import type {
@@ -8,18 +8,16 @@ import type {
 } from "../types/AnimeRespondType";
 import {
   Box,
-  MenuItem,
-  Pagination,
-  Select,
+  Grid,
+  Skeleton,
+  Typography,
   type PaginationProps,
   type SelectChangeEvent,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
-import { Typography } from "@mui/material";
-import SearchField from "../components/SearchField";
 import type { AnimeSearchParams } from "../types/ParamSearchType";
-
-const LIMIT_PER_PAGE = [5, 10, 15, 25];
+import SearchField from "../components/SearchField";
+import AnimeCard from "../components/CardAnime";
+import CustomPagination from "../components/CustomPagination";
 
 const SearchPage = () => {
   const location = useLocation();
@@ -31,13 +29,12 @@ const SearchPage = () => {
 
   const [query, setQuery] = useState<string>(prevState?.query || "");
   const [page, setPage] = useState<number>(prevState?.page || 1);
-  const [limit, setLimit] = useState<number>(
-    prevState?.limit || LIMIT_PER_PAGE[1]
-  );
+  const [limit, setLimit] = useState<number>(prevState?.limit || 10);
   const [dataPagination, setDataPagination] = useState<PaginationType | null>(
     null
   );
   const [animeList, setAnimeList] = useState<AnimeItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const { fetchAnime } = useGetAnime();
   const debouncedQuery = useDebounce(query, 250);
@@ -48,10 +45,14 @@ const SearchPage = () => {
 
   const getAnime = useCallback(
     async (params: AnimeSearchParams) => {
-      const response = await fetchAnime(params);
-      setAnimeList(response?.data);
-      setDataPagination(response?.pagination);
-      // setPage(response?.pagination?.current_page);
+      setIsLoading(true);
+      try {
+        const response = await fetchAnime(params);
+        setAnimeList(response?.data);
+        setDataPagination(response?.pagination);
+      } finally {
+        setIsLoading(false);
+      }
     },
     [page, limit, debouncedQuery]
   );
@@ -65,92 +66,59 @@ const SearchPage = () => {
     getAnime(params);
   }, [debouncedQuery, page, limit]);
 
-
   return (
     <>
-      <Typography variant="body2" component="h2" my={1}>
-        Test
-      </Typography>
-      <SearchField
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setPage(1);
-        }}
-        sx={{ mb: 4 }}
-      />
+      <Box display="flex" justifyContent="flex-end" mb={4}>
+        <SearchField
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          sx={{
+            width: { xs: "100%", sm: "60%", md: "35%" },
+            backgroundColor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 1,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+            },
+          }}
+        />
+      </Box>
       <Grid container spacing={4}>
-        {animeList?.map((item, index) => (
-          <Grid key={index} size={{ xs: 6, sm: 4, md: 2.4 }}>
-            <Box width={"100%"}>
-              <Link
-                to={`/anime/${item?.mal_id}`}
-                state={{
-                  query,
-                  page,
-                  limit,
-                }}
-              >
-                <img
-                  src={item?.images?.jpg?.image_url}
-                  alt={item?.title}
-                  style={{
-                    width: "100%",
-                    aspectRatio: "2 / 3",
-                    objectFit: "cover",
-                    display: "block",
-                  }}
+        {isLoading
+          ? Array.from({ length: limit }).map((_, index) => (
+              <Grid key={index} size={{ xs: 6, sm: 4, md: 2.4 }}>
+                <Box sx={{ borderRadius: 3, overflow: "hidden" }}>
+                  <Skeleton variant="rectangular" width="100%" height={260} />
+                  <Skeleton width="80%" sx={{ mt: 1 }} />
+                  <Skeleton width="60%" />
+                </Box>
+              </Grid>
+            ))
+          : animeList?.map((item, index) => (
+              <Grid key={index} size={{ xs: 6, sm: 4, md: 2.4 }}>
+                <AnimeCard
+                  anime={item}
+                  index={index}
+                  state={{ query, page, limit }}
                 />
-              </Link>
-            </Box>
-          </Grid>
-        ))}
+              </Grid>
+            ))}
       </Grid>
 
       {dataPagination && (
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mt={4}
-          flexWrap="wrap"
-        >
-          <Typography variant="body2" mb={1}>
-            {`${(page - 1) * limit + 1}–${Math.min(
-              page * limit,
-              dataPagination.items.total
-            )} of ${dataPagination.items.total}`}
-          </Typography>
-          <Box
-            display="flex"
-            justifyContent="center"
-            mt={4}
-            gap={2}
-            alignItems="center"
-          >
-            <Pagination
-              count={dataPagination?.last_visible_page}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-            />
-
-            {/* Dropdown Page Selector */}
-            <Select
-              size="small"
-              value={limit.toString()}
-              onChange={(e: SelectChangeEvent) =>
-                setLimit(parseInt(e.target.value))
-              }
-            >
-              {LIMIT_PER_PAGE.map((val, i) => (
-                <MenuItem key={i} value={val.toString()}>
-                  {val}
-                </MenuItem>
-              ))}
-            </Select>
-          </Box>
-        </Box>
+        <CustomPagination
+          page={page}
+          limit={limit}
+          total={dataPagination.items.total}
+          pageCount={dataPagination.last_visible_page}
+          onPageChange={handlePageChange}
+          onLimitChange={(e: SelectChangeEvent) =>
+            setLimit(parseInt(e.target.value))
+          }
+        />
       )}
     </>
   );

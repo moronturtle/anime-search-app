@@ -24,6 +24,7 @@ const SearchField: React.FC<SearchFieldProps> = ({ value, onChange, sx }) => {
           </InputAdornment>
         ),
       }}
+      size="small"
       sx={sx}
     />
   );
