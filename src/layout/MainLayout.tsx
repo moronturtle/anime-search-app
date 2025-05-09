@@ -6,7 +6,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Header />
-      <Container sx={{ py:4 }}>{children}</Container>
+      <Container maxWidth="lg" sx={{ py:4 }}>{children}</Container>
     </>
   );
 };

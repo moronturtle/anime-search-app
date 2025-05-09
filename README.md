@@ -6,3 +6,8 @@ A simple and modern Anime Search App built using:
 - **TypeScript**
 - **Vite**
 - **MUI (Material UI)**
+
+## Installation
+- cd anime-search-app
+- npm install
+- npm run dev
