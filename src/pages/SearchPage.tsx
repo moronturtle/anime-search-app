@@ -1,19 +1,39 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useGetAnime } from "../api/AnimeApi";
 import { useDebounce } from "../hooks/useDebounce";
 import type {
   AnimeItem,
   Pagination as PaginationType,
 } from "../types/AnimeRespondType";
-import { Box, Grid, Pagination, type PaginationProps } from "@mui/material";
+import {
+  Box,
+  MenuItem,
+  Pagination,
+  Select,
+  type PaginationProps,
+  type SelectChangeEvent,
+} from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { Typography } from "@mui/material";
 import SearchField from "../components/SearchField";
 import type { AnimeSearchParams } from "../types/ParamSearchType";
 
+const LIMIT_PER_PAGE = [5, 10, 15, 25];
+
 const SearchPage = () => {
-  const [query, setQuery] = useState<string>("");
-  const [page, setPage] = useState(1);
+  const location = useLocation();
+  const prevState = location.state as {
+    query?: string;
+    page?: number;
+    limit?: number;
+  };
+
+  const [query, setQuery] = useState<string>(prevState?.query || "");
+  const [page, setPage] = useState<number>(prevState?.page || 1);
+  const [limit, setLimit] = useState<number>(
+    prevState?.limit || LIMIT_PER_PAGE[1]
+  );
   const [dataPagination, setDataPagination] = useState<PaginationType | null>(
     null
   );
@@ -27,30 +47,24 @@ const SearchPage = () => {
   };
 
   const getAnime = useCallback(
-    async (params: AnimeSearchParams = { page: 1 }) => {
+    async (params: AnimeSearchParams) => {
       const response = await fetchAnime(params);
-      setDataPagination(response?.pagination);
       setAnimeList(response?.data);
-      setPage(response?.pagination?.current_page);
+      setDataPagination(response?.pagination);
+      // setPage(response?.pagination?.current_page);
     },
-    [page, debouncedQuery]
+    [page, limit, debouncedQuery]
   );
 
   useEffect(() => {
-    let param = { page };
-    if (debouncedQuery.trim()) {
-      getAnime({
-        ...param,
-        q: debouncedQuery,
-      });
-      return;
-    }
-    getAnime(param);
-  }, [debouncedQuery, page]);
+    const params: AnimeSearchParams = {
+      page,
+      limit,
+      ...(debouncedQuery.trim() && { q: debouncedQuery }),
+    };
+    getAnime(params);
+  }, [debouncedQuery, page, limit]);
 
-  useEffect(() => {
-    getAnime();
-  }, []);
 
   return (
     <>
@@ -66,24 +80,76 @@ const SearchPage = () => {
         sx={{ mb: 4 }}
       />
       <Grid container spacing={4}>
-        {animeList?.map((item) => (
-          <Grid size={{ xs: 6, sm: 4, md: 2.4 }} key={item?.mal_id}>
-            <Box width={"20%"}>
-              <Link to={`/anime/${item?.mal_id}`}>
-                <img src={item?.images?.jpg?.image_url} alt={item?.title} />
+        {animeList?.map((item, index) => (
+          <Grid key={index} size={{ xs: 6, sm: 4, md: 2.4 }}>
+            <Box width={"100%"}>
+              <Link
+                to={`/anime/${item?.mal_id}`}
+                state={{
+                  query,
+                  page,
+                  limit,
+                }}
+              >
+                <img
+                  src={item?.images?.jpg?.image_url}
+                  alt={item?.title}
+                  style={{
+                    width: "100%",
+                    aspectRatio: "2 / 3",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
               </Link>
             </Box>
           </Grid>
         ))}
       </Grid>
+
       {dataPagination && (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <Pagination
-            count={dataPagination?.last_visible_page}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-          />
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mt={4}
+          flexWrap="wrap"
+        >
+          <Typography variant="body2" mb={1}>
+            {`${(page - 1) * limit + 1}–${Math.min(
+              page * limit,
+              dataPagination.items.total
+            )} of ${dataPagination.items.total}`}
+          </Typography>
+          <Box
+            display="flex"
+            justifyContent="center"
+            mt={4}
+            gap={2}
+            alignItems="center"
+          >
+            <Pagination
+              count={dataPagination?.last_visible_page}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+
+            {/* Dropdown Page Selector */}
+            <Select
+              size="small"
+              value={limit.toString()}
+              onChange={(e: SelectChangeEvent) =>
+                setLimit(parseInt(e.target.value))
+              }
+            >
+              {LIMIT_PER_PAGE.map((val, i) => (
+                <MenuItem key={i} value={val.toString()}>
+                  {val}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
         </Box>
       )}
     </>
