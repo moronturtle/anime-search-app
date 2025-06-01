@@ -10,7 +10,6 @@ import {
   Box,
   Grid,
   Skeleton,
-  Typography,
   type PaginationProps,
   type SelectChangeEvent,
 } from "@mui/material";
